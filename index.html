@@ -1450,10 +1450,14 @@
         const musicBtn = document.getElementById('music-toggle-btn');
         const sideControls = document.getElementById('side-controls');
 
-        // Otomatis menghentikan lagu saat pengguna keluar dari aplikasi/Chrome (pencet Home/pindah tab)
+        let wasPlayingBeforeHidden = false;
+        let isInvitationOpened = false;
+
+        // Otomatis pause musik saat keluar Chrome/Home, dan lanjut main saat dibuka kembali
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 if (audio && !audio.paused) {
+                    wasPlayingBeforeHidden = true;
                     audio.pause();
                     if (musicBtn) {
                         musicBtn.classList.remove('music-rotating');
@@ -1462,6 +1466,20 @@
                             iconSvg.innerHTML = `<path d="M4.27 3L3 4.27l9 9v.28c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4v-1.73L19.73 21 21 19.73 4.27 3zM14 7h4V3h-6v5.18l2 2z"/>`;
                         }
                     }
+                } else {
+                    wasPlayingBeforeHidden = false;
+                }
+            } else {
+                if (wasPlayingBeforeHidden && isInvitationOpened && audio) {
+                    audio.play().then(() => {
+                        if (musicBtn) {
+                            musicBtn.classList.add('music-rotating');
+                            const iconSvg = document.getElementById('music-icon-svg');
+                            if (iconSvg) {
+                                iconSvg.innerHTML = `<path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>`;
+                            }
+                        }
+                    }).catch(err => console.log("Gagal melanjutkan musik secara otomatis."));
                 }
             }
         });
@@ -1471,6 +1489,7 @@
             if (!cover || !content) return;
 
             cover.classList.add('slide-down'); 
+            isInvitationOpened = true;
             
             if (audio && musicBtn) {
                 audio.play().then(() => {
